@@ -1,42 +1,53 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import PostForm from '../../components/PostForm'
-import { fetchPost, updatePost } from '../../lib/api'
+import MovieForm from '../../components/PostForm'
+import { fetchMovie, updateMovie } from '../../lib/api'
 
 export default function Edit() {
   const router = useRouter()
   const { id } = router.query
-  const [post, setPost] = useState(null)
+  const [movie, setMovie] = useState(null)
 
   useEffect(() => {
     if (!id) return
-    fetchPost(id).then(p => setPost(p)).catch(err => console.error(err))
+    fetchMovie(id).then(m => {
+      const savedRating = localStorage.getItem(`movie_rating_${id}`)
+      setMovie({
+        ...m,
+        rating: savedRating ? parseInt(savedRating) : null
+      })
+    }).catch(err => console.error(err))
   }, [id])
 
   async function onSubmit(fd) {
     try {
-      await updatePost(id, fd)
+      const result = await updateMovie(id, fd)
+      const rating = fd.get('rating')
+      if (rating) {
+        localStorage.setItem(`movie_rating_${id}`, rating)
+      }
       router.push('/')
+      return result
     } catch (e) {
       console.error(e)
-      alert('Lỗi khi cập nhật')
+      alert('Error updating movie')
     }
   }
 
-  if (!post) return (
+  if (!movie) return (
     <div className="container">
       <div style={{ textAlign: 'center', padding: '40px' }}>
-        <h2>Đang tải...</h2>
+        <h2>Loading...</h2>
       </div>
     </div>
   )
 
   return (
     <div className="container">
-      <h1>Chỉnh sửa bài viết</h1>
-      <Link href="/"><button style={{ marginBottom: 20 }}>Quay lại</button></Link>
-      <PostForm initial={post} onSubmit={onSubmit} />
+      <h1>Edit Movie</h1>
+      <Link href="/"><button style={{ marginBottom: 20 }}>Back</button></Link>
+      <MovieForm initial={movie} onSubmit={onSubmit} />
     </div>
   )
 }

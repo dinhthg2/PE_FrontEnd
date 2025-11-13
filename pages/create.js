@@ -1,26 +1,31 @@
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import PostForm from '../components/PostForm'
-import { createPost } from '../lib/api'
+import MovieForm from '../components/PostForm'
+import { createMovie } from '../lib/api'
 
 export default function Create() {
   const router = useRouter()
 
   async function onSubmit(fd) {
     try {
-      await createPost(fd)
+      const result = await createMovie(fd)
+      const rating = fd.get('rating')
+      if (result.id && rating) {
+        localStorage.setItem(`movie_rating_${result.id}`, rating)
+      }
       router.push('/')
+      return result
     } catch (e) {
       console.error(e)
-      alert('Lỗi khi tạo bài viết')
+      alert('Error creating movie')
     }
   }
 
   return (
     <div className="container">
-      <h1>Tạo bài viết mới</h1>
-      <Link href="/"><button style={{ marginBottom: 20 }}>Quay lại</button></Link>
-      <PostForm onSubmit={onSubmit} />
+      <h1>Add New Movie</h1>
+      <Link href="/"><button style={{ marginBottom: 20 }}>Back</button></Link>
+      <MovieForm onSubmit={onSubmit} />
     </div>
   )
 }
